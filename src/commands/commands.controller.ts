@@ -36,10 +36,10 @@ export class CommandsController {
   async repete(
     @Request() req,
     @Param('nb') nb: number,
-    @Body() commandes: CommandeLogo[],
+    @Body() body: { commandes: CommandeLogo[] },
   ) {
     try {
-      const etat = await this.logoService.repete(req.user.id, nb, commandes);
+      const etat = this.logoService.repete(req.user.id, nb, body.commandes);
       return {
         message: 'Commande répétée avec succès',
         etat,
@@ -49,21 +49,27 @@ export class CommandsController {
     }
   }
 
-  @Post('procedure/:nom')
+  @Post('procedure')
   definirProcedure(
-    @Param('nom') nom: string,
-    @Body() commandes: CommandeLogo[],
+    @Body() body: { nom: string; params: string[]; commandes: CommandeLogo[] },
   ) {
-    this.logoService.definirProcedure(nom, commandes);
-    return { message: `Procédure "${nom}" définie avec succès` };
+    this.logoService.definirProcedure(body.nom, body.params, body.commandes);
+    return { message: `Procédure "${body.nom}" définie avec succès` };
   }
 
-  @Post('procedure/executer/:nom')
-  async executerProcedure(@Request() req, @Param('nom') nom: string) {
+  @Post('procedure/executer')
+  async executerProcedure(
+    @Request() req,
+    @Body() body: { nom: string; params: any[] },
+  ) {
     try {
-      const etat = await this.logoService.executerProcedure(req.user.id, nom);
+      const etat = await this.logoService.executerProcedure(
+        req.user.id,
+        body.nom,
+        body.params,
+      );
       return {
-        message: `Procédure "${nom}" exécutée avec succès`,
+        message: `Procédure "${body.nom}" exécutée avec succès`,
         etat,
       };
     } catch (error) {

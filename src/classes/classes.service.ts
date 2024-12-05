@@ -8,39 +8,43 @@ import { Model } from 'mongoose';
 import { Class } from './schemas/class.schema';
 import * as bcrypt from 'bcrypt';
 import { Submission } from './schemas/submission.schema';
-import generateUniqueId from 'generate-unique-id';
+// import generateUniqueId from 'generate-unique-id';
+import { User } from 'src/auth/schemas/user.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ClassesService {
   constructor(
     @InjectModel(Class.name) private classModel: Model<Class>,
     @InjectModel(Submission.name) private submissionModel: Model<Submission>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async getClassById(classId: string, userId: string) {
     const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-    if (
-      ![
-        classData.teacherId,
-        ...classData.coTeachers,
-        ...classData.students,
-      ].includes(userId)
-    ) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    if ([...classData.coTeachers, ...classData.students].includes(user.id)) {
       throw new UnauthorizedException('Accès refusé');
     }
     return classData;
   }
 
-  async joinClass(classId: string, password: string, userId: string) {
+  async joinClass(classId: string, link: string, userId: string) {
     const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-    if (classData.password !== password)
-      throw new UnauthorizedException('Mot de passe incorrect');
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (classData.link !== link)
+      throw new UnauthorizedException('Lien incorrect');
 
-    if (!classData.students.includes(userId)) {
-      classData.students.push(userId);
+    if (!classData.students.includes(user.id)) {
+      classData.students.push(user);
       await classData.save();
+    } else {
+      throw new UnauthorizedException('Utilisateur déjà inscrit');
     }
 
     return { message: 'Ajouté à la classe avec succès' };
@@ -60,8 +64,8 @@ export class ClassesService {
     const newClass = new this.classModel({
       teacherId,
       name,
-      link: generateUniqueId({ length: 10 }),
-      password: await bcrypt.hash(generateUniqueId({ length: 6 }), 10), // Génération et hashage du mot de passe
+      link: uuidv4(),
+      password: await bcrypt.hash(uuidv4(), 10), // Génération et hashage du mot de passe
     });
     return await newClass.save();
   }
@@ -95,7 +99,9 @@ export class ClassesService {
     if (!classData) throw new NotFoundException('Classe introuvable');
     if (classData.teacherId.toString() !== teacherId)
       throw new UnauthorizedException('Action réservée au professeur');
-    if (!classData.students.includes(studentId))
+    const user = await this.userModel.findById(studentId);
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (!classData.students.includes(user.id))
       throw new NotFoundException('Élève introuvable');
     return await this.classModel.findByIdAndUpdate(
       classId,

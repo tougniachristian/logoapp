@@ -8,6 +8,9 @@ export type RoomDocument = Room & Document;
 
 @Schema({ timestamps: true })
 export class Room {
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  owner: User;
+
   @Prop({ required: true })
   name: string; // Nom de la salle
 

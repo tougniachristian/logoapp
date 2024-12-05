@@ -10,6 +10,7 @@ import {
   UseGuards,
   Query,
   Patch,
+  Req,
 } from '@nestjs/common';
 import { ScriptsService } from './scripts.service';
 import { SearchService } from '../search/search.service';
@@ -24,19 +25,19 @@ export class ScriptsController {
     private readonly searchService: SearchService,
   ) {}
 
-  @Get('search')
-  async searchScripts(@Query('query') query: string) {
-    const searchQuery = {
-      query: {
-        multi_match: {
-          query,
-          fields: ['title', 'content', 'tags'],
-        },
-      },
-    };
+  // @Get('search')
+  // async searchScripts(@Query('query') query: string) {
+  //   const searchQuery = {
+  //     query: {
+  //       multi_match: {
+  //         query,
+  //         fields: ['title', 'content', 'tags'],
+  //       },
+  //     },
+  //   };
 
-    return this.searchService.search('scripts', searchQuery);
-  }
+  //   return this.searchService.search('scripts', searchQuery);
+  // }
 
   @Post()
   async createScript(
@@ -99,7 +100,7 @@ export class ScriptsController {
   }
 
   @Get('share/:id')
-  async shareScript(@Param('id') id: string) {
-    return this.scriptsService.shareScript(id);
+  async shareScript(@Param('id') id: string, @Req() req) {
+    return this.scriptsService.generateSharedLink(id, req.user.id);
   }
 }

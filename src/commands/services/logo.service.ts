@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Command } from '../schemas/command.schema';
@@ -33,7 +33,10 @@ export class EtatTortue {
 export class LogoService {
   private etat: EtatTortue;
   private historique: CommandeLogo[] = [];
-  private procedures: Map<string, CommandeLogo[]> = new Map();
+  private procedures: Map<
+    string,
+    { params: string[]; commandes: CommandeLogo[] }
+  > = new Map();
 
   constructor(
     @InjectModel(Command.name) private commandModel: Model<Command>,
@@ -105,6 +108,9 @@ export class LogoService {
       case 'FPOS':
         this.fixerPosition(params[0], params[1]);
         break;
+      case 'REPETE':
+        this.repete(userId, params[0], params[1]);
+        break;
       default:
         throw new Error(`Commande inconnue : ${nom}`);
     }
@@ -130,6 +136,7 @@ export class LogoService {
         this.executeCommande(userId, cmd);
       }
     }
+    // console.log(this.etat);
     return this.getEtat();
   }
 
@@ -137,15 +144,37 @@ export class LogoService {
     return { ...this.etat } as EtatTortue; // Retourne une copie de l'état actuel
   }
 
-  definirProcedure(nom: string, commandes: CommandeLogo[]) {
-    this.procedures.set(nom, commandes);
+  definirProcedure(nom: string, params: string[], commandes: CommandeLogo[]) {
+    const existProcedure = this.procedures.get(nom);
+    if (existProcedure) {
+      throw new BadRequestException('Une procédure avec ce nom existe déjà.');
+    }
+    this.procedures.set(nom, { params, commandes });
   }
 
-  async executerProcedure(userId: string, nom: string): Promise<EtatTortue> {
-    const commandes = this.procedures.get(nom);
-    if (!commandes) throw new Error(`Procédure inconnue : ${nom}`);
+  async executerProcedure(
+    userId: string,
+    nom: string,
+    params: any[],
+  ): Promise<EtatTortue> {
+    const procedure = this.procedures.get(nom);
+    if (!procedure) throw new Error(`Procédure inconnue : ${nom}`);
 
-    for (const cmd of commandes) {
+    const { params: paramNames, commandes } = procedure;
+
+    const commandesAvecValeurs = commandes.map((commande) => {
+      const commandeClone = { ...commande };
+      if (commande.params) {
+        commandeClone.params = commande.params.map((param: any) =>
+          typeof param === 'string' && paramNames.includes(param)
+            ? params[paramNames.indexOf(param)]
+            : param,
+        );
+      }
+      return commandeClone;
+    });
+
+    for (const cmd of commandesAvecValeurs) {
       this.executeCommande(userId, cmd);
     }
     return this.getEtat();

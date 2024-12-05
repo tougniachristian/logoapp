@@ -28,6 +28,7 @@ export class ClassesController {
   ) {
     return this.classesService.addStudent(classId, studentId);
   }
+
   @Put(':classId/students/:studentId/remove')
   async remove(
     @Param('classId') classId: string,
@@ -45,9 +46,9 @@ export class ClassesController {
   async joinClass(
     @Request() req,
     @Param('id') id: string,
-    @Body() body: { password: string },
+    @Body() body: { link: string },
   ) {
-    return this.classesService.joinClass(id, body.password, req.user.id);
+    return this.classesService.joinClass(id, body.link, req.user.id);
   }
 
   @Post(':id/promote')

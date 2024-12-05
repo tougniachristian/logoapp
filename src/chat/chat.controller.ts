@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
@@ -16,10 +17,11 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
   @Post('room')
-  createRoom(@Body() createRoomDto: CreateRoomDto) {
-    return this.chatService.createRoom(createRoomDto);
+  createRoom(@Body() createRoomDto: CreateRoomDto, @Req() req) {
+    return this.chatService.createRoom(createRoomDto, req.user.id);
   }
 
+  //Récupérer les messages d'une discussion
   @Get('room/:roomId/messages')
   getRoomMessages(@Param('roomId') roomId: string) {
     return this.chatService.getRoomMessages(roomId);
@@ -30,6 +32,20 @@ export class ChatController {
   async deleteMessage(@Param('messageId') messageId: string) {
     await this.chatService.deleteMessage(messageId);
     return { message: 'Message supprimé avec succès' };
+  }
+
+  @Post('message/:roomId/send')
+  async sendMessage(
+    @Param('roomId') roomId: string,
+    @Req() req,
+    @Body('content') content,
+  ) {
+    await this.chatService.sendMessage({
+      roomId,
+      senderId: req.user.id,
+      content,
+    });
+    return { message: 'Message envoyer avec succès' };
   }
 
   // Supprimer tous les messages d'une salle

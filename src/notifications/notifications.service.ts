@@ -11,8 +11,9 @@ export class NotificationsService {
 
   async sendPushNotification(deviceId: string, title: string, message: string) {
     const apiUrl = 'https://onesignal.com/api/v1/notifications';
-    const appId = 'your-onesignal-app-id';
-    const apiKey = 'your-onesignal-api-key';
+    const appId = '50aa316d-4f2b-4455-b4f0-8ad192c2f83b';
+    const apiKey =
+      'os_v2_app_kcvdc3kpfncflnhqrlizfqxyhpee4zpzkfhetevqvezigghvrl3qbhqi5xenbowtqorqgjl3cyc6pkpl5jxyv6qf32f3hulc3ekancq';
 
     try {
       const response = await this.httpService

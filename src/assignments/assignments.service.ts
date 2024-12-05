@@ -20,7 +20,7 @@ export class AssignmentsService {
   ) {}
 
   async getAssignmentsForClass(classId: string) {
-    return this.assignmentModel.find({ classId });
+    return this.assignmentModel.find({ class: classId });
   }
 
   async submitAssignment(
@@ -28,12 +28,15 @@ export class AssignmentsService {
     studentId: string,
     content: string,
   ) {
-    const assignment = await this.assignmentModel.findById(assignmentId);
+    const assignment = await this.assignmentModel
+      .findById(assignmentId)
+      .populate('submissions');
     if (!assignment) throw new NotFoundException('Devoir introuvable');
 
-    const existingSubmission = assignment.submissions.find(
-      (s) => s.student.toString() === studentId,
-    );
+    const existingSubmission = await this.submissionModel.findOne({
+      assignment: assignmentId,
+      student: studentId,
+    });
     if (existingSubmission) {
       existingSubmission.isLate = new Date() > new Date(assignment.dueDate);
       existingSubmission.content = content; // Mise à jour de la soumission
@@ -49,11 +52,11 @@ export class AssignmentsService {
 
     await assignment.save();
 
-    // Notification par email et push
-    await this.notificationsService.notifyAssignmentSubmission(
-      assignment.class.teacherId,
-      assignment.title,
-    );
+    // // Notification par email et push
+    // await this.notificationsService.notifyAssignmentSubmission(
+    //   assignment.class.teacherId.id,
+    //   assignment.title,
+    // );
     return { message: 'Devoir soumis avec succès' };
   }
 
@@ -64,26 +67,34 @@ export class AssignmentsService {
     grade: number,
     feedback: string,
   ) {
-    const assignment = await this.assignmentModel.findById(assignmentId);
+    const assignment = await this.assignmentModel
+      .findById(assignmentId)
+      .populate({ path: 'class', populate: { path: 'teacherId' } })
+      .populate('submissions');
     if (!assignment) throw new NotFoundException('Devoir introuvable');
-    if (assignment.class.teacherId !== teacherId)
+
+    if (assignment.class.teacherId._id.toString() !== teacherId)
       throw new UnauthorizedException('Action réservée au professeur');
 
     const submission = assignment.submissions.find(
-      (s) => s.student.id === studentId,
+      (s) => s.student.toString() === studentId,
     );
     if (!submission) throw new NotFoundException('Soumission non trouvée');
 
     submission.grade = grade;
     submission.feedback = feedback;
+    await submission.save();
     await assignment.save();
     return { message: 'Note attribuée avec succès' };
   }
 
   async getProgressForClass(assignmentId: string, teacherId: string) {
-    const assignment = await this.assignmentModel.findById(assignmentId);
+    const assignment = await this.assignmentModel
+      .findById(assignmentId)
+      .populate({ path: 'class', populate: { path: 'teacherId' } })
+      .populate('submissions');
     if (!assignment) throw new NotFoundException('Devoir introuvable');
-    if (assignment.class.teacherId !== teacherId)
+    if (assignment.class.teacherId._id.toString() !== teacherId)
       throw new UnauthorizedException('Action réservée au professeur');
 
     return assignment.submissions.map((s) => ({

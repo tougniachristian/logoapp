@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Script } from './schemas/script.schema';
@@ -19,6 +23,11 @@ export class ScriptsService {
     isPublic: boolean,
     tags: string[],
   ) {
+    const existingScript = await this.scriptModel.find({ title });
+    console.log(existingScript);
+    if (existingScript.length > 0) {
+      throw new ConflictException('Script déjà existant');
+    }
     const script = await this.scriptModel.create({
       userId,
       title,
@@ -27,14 +36,14 @@ export class ScriptsService {
       tags,
     });
 
-    if (isPublic) {
-      await this.searchService.indexDocument('scripts', script._id.toString(), {
-        title,
-        content,
-        tags,
-        userId,
-      });
-    }
+    // if (isPublic) {
+    //   await this.searchService.indexDocument('scripts', script._id.toString(), {
+    //     title,
+    //     content,
+    //     tags,
+    //     userId,
+    //   });
+    // }
 
     return script;
   }
@@ -97,7 +106,10 @@ export class ScriptsService {
     scriptId: string,
     ownerId: string,
   ): Promise<{ sharedLink: string }> {
-    const script = await this.scriptModel.findOne({ _id: scriptId, ownerId });
+    const script = await this.scriptModel.findOne({
+      _id: scriptId,
+      userId: ownerId,
+    });
     if (!script)
       throw new NotFoundException('Script not found or not authorized');
     const sharedLink = uuidv4();
@@ -107,7 +119,10 @@ export class ScriptsService {
   }
 
   async revokeSharedLink(scriptId: string, ownerId: string): Promise<void> {
-    const script = await this.scriptModel.findOne({ _id: scriptId, ownerId });
+    const script = await this.scriptModel.findOne({
+      _id: scriptId,
+      userId: ownerId,
+    });
     if (!script)
       throw new NotFoundException('Script not found or not authorized');
     script.sharedLink = null;
@@ -127,7 +142,7 @@ export class ScriptsService {
   ): Promise<Script> {
     const targetScript = await this.scriptModel.findOne({
       _id: targetScriptId,
-      ownerId,
+      userId: ownerId,
     });
     const sourceScript = await this.scriptModel.findById(sourceScriptId);
     if (!targetScript || !sourceScript)
@@ -138,11 +153,11 @@ export class ScriptsService {
     return targetScript.save();
   }
 
-  async shareScript(scriptId: string) {
-    const script = await this.scriptModel.findById(scriptId);
-    if (!script) {
-      throw new NotFoundException('Script non trouvé');
-    }
-    return { link: `https://yourapp.com/scripts/${scriptId}` }; // Exemple de lien
-  }
+  // async shareScript(scriptId: string) {
+  //   const script = await this.scriptModel.findById(scriptId);
+  //   if (!script) {
+  //     throw new NotFoundException('Script non trouvé');
+  //   }
+  //   return { link: `https://yourapp.com/scripts/${scriptId}` }; // Exemple de lien
+  // }
 }

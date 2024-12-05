@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AuditModule } from './audit/audit.module';
 import { SearchModule } from './search/search.module';
 import { ChatModule } from './chat/chat.module';
+import { FileExploreModule } from './file-explore/file-explore.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ChatModule } from './chat/chat.module';
     AuditModule,
     SearchModule,
     ChatModule,
+    FileExploreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
