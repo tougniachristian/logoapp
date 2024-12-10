@@ -59,4 +59,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Notification à la salle de la suppression des messages
     this.server.to(roomId).emit('roomMessagesCleared', { roomId });
   }
+
+  @SubscribeMessage('offer')
+  handleOffer(client: any, payload: any) {
+    // Relayer l'offre aux autres clients
+    client.broadcast.emit('offer', payload);
+  }
+
+  @SubscribeMessage('answer')
+  handleAnswer(client: any, payload: any) {
+    // Relayer la réponse aux autres clients
+    client.broadcast.emit('answer', payload);
+  }
+
+  @SubscribeMessage('candidate')
+  handleCandidate(client: any, payload: any) {
+    // Relayer les candidats ICE aux autres clients
+    client.broadcast.emit('candidate', payload);
+  }
 }

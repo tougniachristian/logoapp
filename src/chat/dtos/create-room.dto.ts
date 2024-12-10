@@ -1,5 +1,5 @@
 // src/chat/dtos/create-room.dto.ts
-import { IsString, IsArray } from 'class-validator';
+import { IsString, IsArray, IsBoolean } from 'class-validator';
 
 export class CreateRoomDto {
   @IsString()
@@ -7,4 +7,7 @@ export class CreateRoomDto {
 
   @IsArray()
   participants: string[];
+
+  @IsBoolean()
+  isPrivate: boolean;
 }
