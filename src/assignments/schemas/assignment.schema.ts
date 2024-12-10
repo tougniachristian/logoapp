@@ -15,6 +15,9 @@ export class Assignment extends Document {
   @Prop()
   dueDate: Date; // Date limite pour les devoirs
 
+  @Prop({ type: [String], default: [] })
+  files: string[]; // Liste des chemins des fichiers joints
+
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Class' })
   class: Class;
 

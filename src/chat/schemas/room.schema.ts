@@ -12,6 +12,9 @@ export class Room {
   owner: User;
 
   @Prop({ required: true })
+  isPrivate: boolean; // Indicateur de conversation privée ou groupe
+
+  @Prop({ required: true })
   name: string; // Nom de la salle
 
   @Prop({

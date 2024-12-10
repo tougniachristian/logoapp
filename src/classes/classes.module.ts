@@ -5,9 +5,11 @@ import { ClassesService } from './classes.service';
 import { ClassesController } from './classes.controller';
 import { Submission, SubmissionSchema } from './schemas/submission.schema';
 import { User, UserSchema } from 'src/auth/schemas/user.schema';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
+    NotificationsModule,
     MongooseModule.forFeature([
       { name: Class.name, schema: ClassSchema },
       { name: Submission.name, schema: SubmissionSchema },

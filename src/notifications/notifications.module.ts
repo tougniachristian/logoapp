@@ -8,11 +8,10 @@ import { HttpModule } from '@nestjs/axios';
     HttpModule,
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.example.com',
-        port: 587,
+        service: 'Gmail', // true pour le port 465
         auth: {
-          user: 'your-email@example.com',
-          pass: 'your-email-password',
+          user: 'tougniadarel@gmail.com',
+          pass: 'dxmj njts peyb qehd',
         },
       },
       defaults: {

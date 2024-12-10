@@ -23,6 +23,10 @@ export class ChatService {
     return room.save();
   }
 
+  async findRoomById(roomId: string): Promise<Room> {
+    return this.roomModel.findById(roomId).populate('participants').exec();
+  }
+
   // async addMemberToRoom(createRoomDto: CreateRoomDto): Promise<Room> {
   //   const room = new this.roomModel(createRoomDto);
   //   return room.save();

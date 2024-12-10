@@ -15,6 +15,8 @@ import { AuditModule } from './audit/audit.module';
 import { SearchModule } from './search/search.module';
 import { ChatModule } from './chat/chat.module';
 import { FileExploreModule } from './file-explore/file-explore.module';
+// import { APP_GUARD } from '@nestjs/core';
+// import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -32,6 +34,12 @@ import { FileExploreModule } from './file-explore/file-explore.module';
     FileExploreModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard,
+    // },
+  ],
 })
 export class AppModule {}

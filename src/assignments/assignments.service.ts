@@ -27,6 +27,7 @@ export class AssignmentsService {
     assignmentId: string,
     studentId: string,
     content: string,
+    file: string,
   ) {
     const assignment = await this.assignmentModel
       .findById(assignmentId)
@@ -46,17 +47,18 @@ export class AssignmentsService {
         student: studentId,
         content,
         isLate: new Date() > new Date(assignment.dueDate),
+        file,
       });
       assignment.submissions.push(soumission);
     }
 
     await assignment.save();
 
-    // // Notification par email et push
-    // await this.notificationsService.notifyAssignmentSubmission(
-    //   assignment.class.teacherId.id,
-    //   assignment.title,
-    // );
+    // Notification par email et push
+    await this.notificationsService.notifyAssignmentSubmission(
+      assignment.class.teacherId.email,
+      assignment.title,
+    );
     return { message: 'Devoir soumis avec succès' };
   }
 
@@ -85,6 +87,11 @@ export class AssignmentsService {
     submission.feedback = feedback;
     await submission.save();
     await assignment.save();
+    await this.notificationsService.notifyGradeAssigned(
+      submission.student.email,
+      assignment.title,
+      grade,
+    );
     return { message: 'Note attribuée avec succès' };
   }
 
@@ -109,18 +116,34 @@ export class AssignmentsService {
     teacherId: string,
     title: string,
     description: string,
+    filePaths: string[],
   ): Promise<Assignment> {
+    const classData = await this.classModel.findById(classId);
+    if (!classData) throw new NotFoundException('Classe introuvable');
+
     const assignment = new this.assignmentModel({
       class: classId,
       teacherId,
       title,
       description,
       submissions: [],
+      files: filePaths,
     });
     await assignment.save();
     await this.classModel.findByIdAndUpdate(classId, {
       $addToSet: { assignments: assignment._id },
     });
+
+    Promise.all(
+      classData.students.map(
+        async (student) =>
+          await this.notificationsService.notifyCreateAssignment(
+            student.email,
+            assignment.title,
+          ),
+      ),
+    );
+
     return assignment;
   }
 }

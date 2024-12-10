@@ -6,46 +6,73 @@ import {
   Param,
   Request,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  UploadedFile,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { MulterConfigService } from 'src/common/multer/multer-config.service';
 
-@UseGuards(JwtAuthGuard)
 @Controller('assignments')
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['teacher', 'admin']))
   @Post()
+  @UseInterceptors(
+    FilesInterceptor('files', 5, {
+      storage: MulterConfigService.storage,
+      fileFilter: MulterConfigService.fileFilter,
+    }),
+  )
   async createAssignment(
     @Request() req,
     @Body() body: { classId: string; title: string; description: string },
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
+    const filePaths = files.map((file) => `/storage/${file.filename}`);
     return this.assignmentsService.createAssignment(
       req.body.classId,
       req.user.id,
       body.title,
       body.description,
+      filePaths,
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('class/:id')
   async getAssignmentsForClass(@Param('id') classId: string) {
     return this.assignmentsService.getAssignmentsForClass(classId);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['user']))
   @Post(':id/submit')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: MulterConfigService.storage,
+      fileFilter: MulterConfigService.fileFilter,
+    }),
+  )
   async submitAssignment(
     @Request() req,
     @Param('id') id: string,
     @Body() body: { content: string },
+    @UploadedFile() file: Express.Multer.File,
   ) {
+    const filePath = `/storage/${file.filename}`;
     return this.assignmentsService.submitAssignment(
       id,
       req.user.id,
       body.content,
+      filePath,
     );
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['teacher', 'admin']))
   @Post(':id/grade')
   async gradeSubmission(
     @Request() req,
@@ -61,6 +88,7 @@ export class AssignmentsController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id/progress')
   async getProgressForClass(@Request() req, @Param('id') id: string) {
     return this.assignmentsService.getProgressForClass(id, req.user.id);

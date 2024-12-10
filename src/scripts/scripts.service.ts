@@ -66,12 +66,12 @@ export class ScriptsService {
     if (!script) throw new NotFoundException('Script non trouvé');
 
     if (script.isPublic) {
-      await this.searchService.indexDocument('scripts', script._id.toString(), {
-        title: script.title,
-        content: script.content,
-        tags: script.tags,
-        userId: script.userId,
-      });
+      // await this.searchService.indexDocument('scripts', script._id.toString(), {
+      //   title: script.title,
+      //   content: script.content,
+      //   tags: script.tags,
+      //   userId: script.userId,
+      // });
     }
 
     return script;

@@ -15,6 +15,9 @@ export class Submission extends Document {
   @Prop({ required: true })
   content: string; // Texte ou script soumis
 
+  @Prop({ type: String })
+  file: string; // Liste des chemins des fichiers joints
+
   @Prop()
   grade: number; // Note attribuée par l’enseignant
 

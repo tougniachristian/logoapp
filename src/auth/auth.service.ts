@@ -19,7 +19,12 @@ export class AuthService {
   ) {}
 
   //ok
-  async register(email: string, password: string, name: string): Promise<any> {
+  async register(
+    email: string,
+    password: string,
+    name: string,
+    role: string,
+  ): Promise<any> {
     const existingUser = await this.userModel.findOne({ email });
     if (existingUser) {
       throw new BadRequestException('Email already in use');
@@ -31,6 +36,7 @@ export class AuthService {
         name,
         email,
         password: hashedPassword,
+        role,
       });
       // Génération d'un token de validation d'email
       const verificationToken = this.jwtService.sign(

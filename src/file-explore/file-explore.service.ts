@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
+import { existsSync, promises as fs } from 'fs';
 import * as path from 'path';
 
 @Injectable()
@@ -8,6 +8,10 @@ export class FileExploreService {
 
   async listFiles(directory = ''): Promise<string[]> {
     const fullPath = path.join(this.basePath, directory);
+    const isFolderExist = existsSync(fullPath);
+    if (!isFolderExist) {
+      fs.mkdir(fullPath);
+    }
     const files = await fs.readdir(fullPath);
     return files;
   }
@@ -30,5 +34,12 @@ export class FileExploreService {
   async createDirectory(directory: string): Promise<void> {
     const dirPath = path.join(this.basePath, directory);
     await fs.mkdir(dirPath, { recursive: true });
+  }
+
+  // Méthode pour importer un fichier
+  async importFile(file: Express.Multer.File): Promise<string> {
+    const filePath = path.join(this.basePath, file.originalname);
+    await fs.writeFile(filePath, file.buffer);
+    return file.originalname;
   }
 }

@@ -7,16 +7,18 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Class } from './schemas/class.schema';
 import * as bcrypt from 'bcrypt';
-import { Submission } from './schemas/submission.schema';
+// import { Submission } from './schemas/submission.schema';
 // import generateUniqueId from 'generate-unique-id';
 import { User } from 'src/auth/schemas/user.schema';
 import { v4 as uuidv4 } from 'uuid';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class ClassesService {
   constructor(
     @InjectModel(Class.name) private classModel: Model<Class>,
-    @InjectModel(Submission.name) private submissionModel: Model<Submission>,
+    // @InjectModel(Submission.name) private submissionModel: Model<Submission>,
+    private readonly notificationsService: NotificationsService,
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
@@ -73,11 +75,24 @@ export class ClassesService {
   async addStudent(classId: string, studentId: string): Promise<Class> {
     const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-    return await this.classModel.findByIdAndUpdate(
-      classId,
-      { $addToSet: { students: studentId } },
-      { new: true },
-    );
+    const student = await this.userModel.findById(classId);
+    if (!student) throw new NotFoundException('Elève introuvable');
+
+    try {
+      const newClass = await this.classModel.findByIdAndUpdate(
+        classId,
+        { $addToSet: { students: studentId } },
+        { new: true },
+      );
+      // Notification par email et push
+      await this.notificationsService.notifyAddedToClass(
+        student.email,
+        classData.name,
+      );
+      return newClass;
+    } catch (error) {
+      throw new Error("Erreur lors de l'ajout de l'élève" + error);
+    }
   }
 
   async removeStudent(classId: string, studentId: string): Promise<Class> {

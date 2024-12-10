@@ -58,6 +58,12 @@ export class NotificationsService {
     return this.sendEmail(email, subject, text);
   }
 
+  async notifyCreateAssignment(email: string, assignmentTitle: string) {
+    const subject = `Nouveau devoir créé : ${assignmentTitle}`;
+    const text = `Un nouveau devoir a été créé : ${assignmentTitle}. Vous pouvez commencer à le remplir.`;
+    return this.sendEmail(email, subject, text);
+  }
+
   async notifyGradeAssigned(
     email: string,
     assignmentTitle: string,
@@ -65,6 +71,12 @@ export class NotificationsService {
   ) {
     const subject = `Note attribuée pour le devoir : ${assignmentTitle}`;
     const text = `Vous avez reçu une note de ${grade} pour le devoir : ${assignmentTitle}.`;
+    return this.sendEmail(email, subject, text);
+  }
+
+  async notifyAddedToClass(email: string, className: string) {
+    const subject = `Ajouté à la classe : ${className}`;
+    const text = `Votre compte a été créé et vous êtes maintenant inscrit à la classe : ${className}.`;
     return this.sendEmail(email, subject, text);
   }
 }

@@ -10,17 +10,19 @@ import {
 } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('classes')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Post()
   async createClass(@Request() req, @Body('name') name: string) {
     return this.classesService.createClass(req.user.id, name);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher', 'co_teacher']))
   @Put(':classId/students/:studentId/add')
   async addStudent(
     @Param('classId') classId: string,
@@ -29,6 +31,7 @@ export class ClassesController {
     return this.classesService.addStudent(classId, studentId);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Put(':classId/students/:studentId/remove')
   async remove(
     @Param('classId') classId: string,
@@ -37,11 +40,13 @@ export class ClassesController {
     return this.classesService.removeStudent(classId, studentId);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Get(':id')
   async getClassById(@Request() req, @Param('id') id: string) {
     return this.classesService.getClassById(id, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['user']))
   @Post(':id/join')
   async joinClass(
     @Request() req,
@@ -51,6 +56,7 @@ export class ClassesController {
     return this.classesService.joinClass(id, body.link, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Post(':id/promote')
   async promoteToCoTeacher(
     @Request() req,
@@ -64,6 +70,7 @@ export class ClassesController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, new RolesGuard(['user', 'teacher']))
   @Get()
   async getClassesForUser(@Request() req) {
     return this.classesService.getClassesForUser(req.user.id);
