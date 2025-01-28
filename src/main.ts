@@ -26,8 +26,15 @@ async function bootstrap() {
   // Appliquer globalement le filter d'exception
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // Enable CORS
+  app.enableCors({
+    origin: 'http://localhost:5173', // React app URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Include cookies if needed
+  });
+
   // Activer les pipes de validation globale
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(4000);
+  await app.listen(3000);
 }
 bootstrap();

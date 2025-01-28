@@ -16,7 +16,7 @@ export class EmailService {
   }
 
   async sendVerificationEmail(to: string, token: string) {
-    const verificationUrl = `http://localhost:4000/auth/verify-email?token=${token}`;
+    const verificationUrl = `http://localhost:5173/auth/verify-email?token=${token}`;
     const mailOptions = {
       from: '"Support LogoApp" <support@logoapp.com>',
       to,

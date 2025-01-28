@@ -27,7 +27,7 @@ export class AuthController {
       email: string;
       password: string;
       name: string;
-      role: string;
+      role?: string;
     },
   ) {
     return this.authService.register(

@@ -23,10 +23,11 @@ export class AuthService {
     email: string,
     password: string,
     name: string,
-    role: string,
+    role?: string,
   ): Promise<any> {
     const existingUser = await this.userModel.findOne({ email });
     if (existingUser) {
+      console.log(existingUser);
       throw new BadRequestException('Email already in use');
     }
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -51,6 +52,7 @@ export class AuthService {
         message: 'Inscription réussie. Veuillez vérifier votre email.',
       };
     } catch (error) {
+      console.log(error);
       throw new BadRequestException(error);
     }
   }
