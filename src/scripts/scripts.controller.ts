@@ -90,16 +90,12 @@ export class ScriptsController {
     return { message: 'Shared link revoked' };
   }
 
-  @Patch(':targetId/import/:sourceId')
-  async importScript(
-    @Param('targetId') targetId: string,
-    @Param('sourceId') sourceId: string,
-    @Request() req,
-  ) {
-    return this.scriptsService.importScript(targetId, sourceId, req.user.id);
+  @Patch('import/:id')
+  async importScript(@Param('id') id: string, @Request() req) {
+    return this.scriptsService.importScript(id, req.user.id);
   }
 
-  @Get('share/:id')
+  @Post('share/:id')
   async shareScript(@Param('id') id: string, @Req() req) {
     return this.scriptsService.generateSharedLink(id, req.user.id);
   }

@@ -83,8 +83,8 @@ export class CommandsController {
   }
 
   @Get('historique-db')
-  async obtenirHistorique() {
-    return await this.logoService.obtenirHistorique();
+  async obtenirHistorique(@Request() req) {
+    return await this.logoService.obtenirHistorique(req.user.id);
   }
 
   @Get('etat')

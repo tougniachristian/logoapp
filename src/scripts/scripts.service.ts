@@ -24,7 +24,6 @@ export class ScriptsService {
     tags: string[],
   ) {
     const existingScript = await this.scriptModel.find({ title });
-    console.log(existingScript);
     if (existingScript.length > 0) {
       throw new ConflictException('Script déjà existant');
     }
@@ -35,15 +34,6 @@ export class ScriptsService {
       isPublic,
       tags,
     });
-
-    // if (isPublic) {
-    //   await this.searchService.indexDocument('scripts', script._id.toString(), {
-    //     title,
-    //     content,
-    //     tags,
-    //     userId,
-    //   });
-    // }
 
     return script;
   }
@@ -78,18 +68,21 @@ export class ScriptsService {
   }
 
   async deleteScript(userId: string, scriptId: string) {
-    const script = await this.scriptModel.findOneAndDelete({
-      _id: scriptId,
-      userId,
-    });
+    try {
+      const script = await this.scriptModel.findOneAndDelete({
+        _id: scriptId,
+        userId,
+      });
 
-    if (!script) throw new NotFoundException('Script non trouvé');
+      if (!script) throw new NotFoundException('Script non trouvé');
 
-    if (script.isPublic) {
-      await this.searchService.deleteDocument('scripts', scriptId);
+      // if (script.isPublic) {
+      //   await this.searchService.deleteDocument('scripts', scriptId);
+      // }
+      return { message: 'Script supprimé avec succès' };
+    } catch (error) {
+      throw new Error(error);
     }
-
-    return { message: 'Script supprimé avec succès' };
   }
 
   async searchPublicScripts(tags: string[]) {
@@ -118,7 +111,7 @@ export class ScriptsService {
     return { sharedLink };
   }
 
-  async revokeSharedLink(scriptId: string, ownerId: string): Promise<void> {
+  async revokeSharedLink(scriptId: string, ownerId: string): Promise<any> {
     const script = await this.scriptModel.findOne({
       _id: scriptId,
       userId: ownerId,
@@ -127,6 +120,7 @@ export class ScriptsService {
       throw new NotFoundException('Script not found or not authorized');
     script.sharedLink = null;
     await script.save();
+    return { message: 'Script saved successfully' };
   }
 
   async findBySharedLink(sharedLink: string): Promise<Script> {
@@ -135,22 +129,22 @@ export class ScriptsService {
     return script;
   }
 
-  async importScript(
-    targetScriptId: string,
-    sourceScriptId: string,
-    ownerId: string,
-  ): Promise<Script> {
-    const targetScript = await this.scriptModel.findOne({
-      _id: targetScriptId,
-      userId: ownerId,
-    });
-    const sourceScript = await this.scriptModel.findById(sourceScriptId);
-    if (!targetScript || !sourceScript)
-      throw new NotFoundException('Script not found');
+  async importScript(scriptId: string, userId: string): Promise<Script> {
+    const originalScript = await this.findById(scriptId);
+    if (!originalScript.isPublic && originalScript.userId !== userId) {
+      throw new NotFoundException(`Script not found or not accessible`);
+    }
 
-    targetScript.content += `\n\n// Imported Script Content\n${sourceScript.content}`;
-    targetScript.importedFrom = sourceScriptId;
-    return targetScript.save();
+    const importedScript = new this.scriptModel({
+      ...originalScript.toObject(),
+      _id: undefined,
+      userId,
+      importedFrom: originalScript._id,
+      sharedLink: null,
+      isPublic: false,
+    });
+
+    return importedScript.save();
   }
 
   // async shareScript(scriptId: string) {

@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useStaticAssets(path.join(__dirname, '..', 'storage'), {
-    prefix: '/storage', // Accès via /storage/<filename>
+    prefix: '/storage/',
   });
 
   const config = new DocumentBuilder()

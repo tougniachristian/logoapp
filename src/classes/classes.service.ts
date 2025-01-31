@@ -53,35 +53,39 @@ export class ClassesService {
   }
 
   async getClassesForUser(userId: string) {
-    return this.classModel.find({
-      $or: [
-        { teacherId: userId },
-        { coTeachers: userId },
-        { students: userId },
-      ],
-    });
+    return this.classModel
+      .find({
+        $or: [
+          { teacherId: userId },
+          { coTeachers: userId },
+          { students: userId },
+        ],
+      })
+      .populate('teacherId')
+      .populate('students');
   }
 
-  async createClass(teacherId: string, name: string): Promise<Class> {
+  async createClass(teacherId: string, name: string): Promise<any> {
     const newClass = new this.classModel({
       teacherId,
       name,
       link: uuidv4(),
       password: await bcrypt.hash(uuidv4(), 10), // Génération et hashage du mot de passe
     });
-    return await newClass.save();
+    await newClass.save();
+    return { message: 'Class saved successfully' };
   }
 
-  async addStudent(classId: string, studentId: string): Promise<Class> {
+  async addStudent(classId: string, email: string): Promise<any> {
     const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-    const student = await this.userModel.findById(classId);
+    const student = await this.userModel.findOne({ email });
     if (!student) throw new NotFoundException('Elève introuvable');
 
     try {
-      const newClass = await this.classModel.findByIdAndUpdate(
+      await this.classModel.findByIdAndUpdate(
         classId,
-        { $addToSet: { students: studentId } },
+        { $addToSet: { students: student.id } },
         { new: true },
       );
       // Notification par email et push
@@ -89,7 +93,7 @@ export class ClassesService {
         student.email,
         classData.name,
       );
-      return newClass;
+      return { message: 'Student added successfully' };
     } catch (error) {
       throw new Error("Erreur lors de l'ajout de l'élève" + error);
     }

@@ -23,12 +23,12 @@ export class ClassesController {
   }
 
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher', 'co_teacher']))
-  @Put(':classId/students/:studentId/add')
+  @Put(':classId/students/add')
   async addStudent(
     @Param('classId') classId: string,
-    @Param('studentId') studentId: string,
+    @Body('email') email: string,
   ) {
-    return this.classesService.addStudent(classId, studentId);
+    return this.classesService.addStudent(classId, email);
   }
 
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))

@@ -184,8 +184,8 @@ export class LogoService {
     return this.historique;
   }
 
-  async obtenirHistorique(): Promise<CommandeLogo[]> {
-    return await this.commandModel.find();
+  async obtenirHistorique(id: string): Promise<CommandeLogo[]> {
+    return await this.commandModel.find({ id: id });
   }
 
   private avancer(unites: number) {
