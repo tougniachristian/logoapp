@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/auth/schemas/user.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { UpdateClassDto } from './dto/class.dto';
 
 @Injectable()
 export class ClassesService {
@@ -62,7 +63,30 @@ export class ClassesService {
         ],
       })
       .populate('teacherId')
-      .populate('students');
+      .populate('students')
+      .populate('coTeachers')
+      .populate('assignments');
+  }
+
+  async updateClass(
+    id: string,
+    updateClassDto: UpdateClassDto,
+  ): Promise<Class> {
+    const updatedClass = await this.classModel
+      .findByIdAndUpdate(id, updateClassDto, { new: true })
+      .exec();
+    if (!updatedClass) {
+      throw new NotFoundException('Class not found');
+    }
+    return updatedClass;
+  }
+
+  async deleteClass(id: string): Promise<any> {
+    const result = await this.classModel.deleteOne({ _id: id }).exec();
+    if (result.deletedCount === 0) {
+      throw new NotFoundException('Class not found');
+    }
+    return { message: 'Class deleted successfully' };
   }
 
   async createClass(teacherId: string, name: string): Promise<any> {
@@ -76,24 +100,31 @@ export class ClassesService {
     return { message: 'Class saved successfully' };
   }
 
-  async addStudent(classId: string, email: string): Promise<any> {
+  async addStudent(classId: string, emails: string[]): Promise<any> {
     const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-    const student = await this.userModel.findOne({ email });
-    if (!student) throw new NotFoundException('Elève introuvable');
+    const students = await this.userModel.find({ email: { $in: emails } });
+
+    if (!students.length) throw new NotFoundException('Aucun élève trouvé');
+
+    const studentIds = students.map((student) => student.id);
 
     try {
       await this.classModel.findByIdAndUpdate(
         classId,
-        { $addToSet: { students: student.id } },
+        { $addToSet: { students: { $each: studentIds } } }, // Ajout en lot
         { new: true },
       );
       // Notification par email et push
-      await this.notificationsService.notifyAddedToClass(
-        student.email,
-        classData.name,
-      );
-      return { message: 'Student added successfully' };
+      // Envoyer une notification à chaque étudiant ajouté
+      for (const student of students) {
+        await this.notificationsService.notifyAddedToClass(
+          student.email,
+          classData.name,
+        );
+      }
+
+      return { message: `${students.length} élèves ajoutés avec succès` };
     } catch (error) {
       throw new Error("Erreur lors de l'ajout de l'élève" + error);
     }
@@ -105,6 +136,16 @@ export class ClassesService {
     return await this.classModel.findByIdAndUpdate(
       classId,
       { $pull: { students: studentId } },
+      { new: true },
+    );
+  }
+
+  async removeCoTeacher(classId: string, coTeacherId: string): Promise<Class> {
+    const classData = await this.classModel.findById(classId);
+    if (!classData) throw new NotFoundException('Classe introuvable');
+    return await this.classModel.findByIdAndUpdate(
+      classId,
+      { $pull: { coTeachers: coTeacherId } },
       { new: true },
     );
   }
@@ -127,6 +168,29 @@ export class ClassesService {
       {
         $addToSet: { coTeachers: studentId },
         $pull: { students: studentId },
+      },
+      { new: true },
+    );
+  }
+
+  async retrogradetoStudent(
+    classId: string,
+    teacherId: string,
+    coTeacherId: string,
+  ): Promise<Class> {
+    const classData = await this.classModel.findById(classId);
+    if (!classData) throw new NotFoundException('Classe introuvable');
+    if (classData.teacherId.toString() !== teacherId)
+      throw new UnauthorizedException('Action réservée au professeur');
+    const user = await this.userModel.findById(coTeacherId);
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (!classData.coTeachers.includes(user.id))
+      throw new NotFoundException('Élève introuvable');
+    return await this.classModel.findByIdAndUpdate(
+      classId,
+      {
+        $addToSet: { students: coTeacherId },
+        $pull: { coTeachers: coTeacherId },
       },
       { new: true },
     );

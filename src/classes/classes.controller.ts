@@ -7,10 +7,12 @@ import {
   Request,
   UseGuards,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { ClassesService } from './classes.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UpdateClassDto } from './dto/class.dto';
 
 @Controller('classes')
 export class ClassesController {
@@ -26,9 +28,10 @@ export class ClassesController {
   @Put(':classId/students/add')
   async addStudent(
     @Param('classId') classId: string,
-    @Body('email') email: string,
+    @Body('emails') emails: string,
   ) {
-    return this.classesService.addStudent(classId, email);
+    const emailList = emails.split(',').map((email) => email.trim());
+    return this.classesService.addStudent(classId, emailList);
   }
 
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
@@ -38,6 +41,15 @@ export class ClassesController {
     @Param('studentId') studentId: string,
   ) {
     return this.classesService.removeStudent(classId, studentId);
+  }
+
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @Put(':classId/co-teacher/:studentId/remove')
+  async removeCoTeacher(
+    @Param('classId') classId: string,
+    @Param('coTeacherId') coTeacherId: string,
+  ) {
+    return this.classesService.removeCoTeacher(classId, coTeacherId);
   }
 
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
@@ -57,6 +69,21 @@ export class ClassesController {
   }
 
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @Put(':id')
+  async updateClass(
+    @Param('id') id: string,
+    @Body() updateClassDto: UpdateClassDto,
+  ) {
+    return this.classesService.updateClass(id, updateClassDto);
+  }
+
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @Delete(':id')
+  async deleteClass(@Param('id') id: string) {
+    return this.classesService.deleteClass(id);
+  }
+
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Post(':id/promote')
   async promoteToCoTeacher(
     @Request() req,
@@ -67,6 +94,20 @@ export class ClassesController {
       id,
       req.user.id,
       body.studentId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @Post(':id/retrograde')
+  async retrogradeToStudent(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { coTeacherId: string },
+  ) {
+    return this.classesService.retrogradetoStudent(
+      id,
+      req.user.id,
+      body.coTeacherId,
     );
   }
 
