@@ -14,6 +14,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Patch,
+  Request,
 } from '@nestjs/common';
 import { FileExploreService } from './file-explore.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -29,8 +30,8 @@ export class FileExploreController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll() {
-    return this.fileService.findAll();
+  async findAll(@Request() req) {
+    return this.fileService.findAll(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -122,8 +123,9 @@ export class FileExploreController {
       }),
     )
     file: Express.Multer.File,
+    @Request() req,
   ) {
-    const filename = await this.fileService.create(file);
+    const filename = await this.fileService.create(file, req.user.id);
     return { message: `File ${filename} imported successfully` };
   }
 

@@ -47,7 +47,7 @@ export class FileExploreService {
     return file.originalname;
   }
 
-  async create(file: Express.Multer.File): Promise<File> {
+  async create(file: Express.Multer.File, id: string): Promise<File> {
     // const filePath = path.join(this.basePath, file.originalname);
     // await fs.writeFile(filePath, file.buffer);
     const createdFile = new this.fileModel({
@@ -55,12 +55,13 @@ export class FileExploreService {
       path: file.path,
       type: file.mimetype,
       size: file.size,
+      owner: id,
     });
     return createdFile.save();
   }
 
-  async findAll(): Promise<File[]> {
-    return this.fileModel.find().exec();
+  async findAll(id: string): Promise<File[]> {
+    return this.fileModel.find({ owner: id }).exec();
   }
 
   async findOne(id: string): Promise<File> {

@@ -24,7 +24,12 @@ export class ClassesService {
   ) {}
 
   async getClassById(classId: string, userId: string) {
-    const classData = await this.classModel.findById(classId);
+    const classData = await this.classModel
+      .findById(classId)
+      .populate('teacherId')
+      .populate('students')
+      .populate('coTeachers')
+      .populate('assignments');
     if (!classData) throw new NotFoundException('Classe introuvable');
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Utilisateur introuvable');

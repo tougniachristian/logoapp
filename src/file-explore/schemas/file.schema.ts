@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { User } from 'src/auth/schemas/user.schema';
 
 @Schema({ timestamps: true })
 export class File extends Document {
@@ -14,6 +15,9 @@ export class File extends Document {
 
   @Prop({ required: true })
   size: number;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  owner: User;
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);

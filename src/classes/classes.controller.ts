@@ -52,7 +52,10 @@ export class ClassesController {
     return this.classesService.removeCoTeacher(classId, coTeacherId);
   }
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @UseGuards(
+    JwtAuthGuard,
+    new RolesGuard(['admin', 'teacher', 'user', 'co_teacher']),
+  )
   @Get(':id')
   async getClassById(@Request() req, @Param('id') id: string) {
     return this.classesService.getClassById(id, req.user.id);
