@@ -119,7 +119,9 @@ export class AssignmentsService {
     filePaths?: string[],
     dueDate?: Date,
   ): Promise<Assignment> {
-    const classData = (await this.classModel.findById(classId)).populated('students');
+    const classData = (await this.classModel.findById(classId)).populated(
+      'students',
+    );
     console.log(classData);
     if (!classData) throw new NotFoundException('Classe introuvable');
 

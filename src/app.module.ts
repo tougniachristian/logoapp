@@ -20,6 +20,9 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 // import { APP_GUARD } from '@nestjs/core';
 // import { RolesGuard } from './auth/guards/roles.guard';
+// import { ProcedureService } from './procedure/procedure.service';
+// import { ProcedureController } from './procedure/procedure.controller';
+import { ProcedureModule } from './procedure/procedure.module';
 
 @Module({
   imports: [
@@ -40,14 +43,17 @@ import { extname } from 'path';
     ClassesModule,
     AssignmentsModule,
     NotificationsModule,
+    ProcedureModule,
     AuditModule,
     SearchModule,
     ChatModule,
     FileExploreModule,
+    ProcedureModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    // ProcedureService,
     // {
     //   provide: APP_GUARD,
     //   useClass: RolesGuard,

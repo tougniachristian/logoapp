@@ -11,36 +11,15 @@ export class CommandsService {
     private readonly auditService: AuditService,
   ) {}
 
-  async executeCommand(userId: string, command: string) {
-    // Valide la commande et la stocke
-    const validCommands = [
-      'AV',
-      'RE',
-      'TD',
-      'TG',
-      'LC',
-      'BC',
-      'CT',
-      'MT',
-      'VE',
-      'NETTOIE',
-      'ORIGINE',
-    ];
-    const [cmd] = command.split(' ');
+  async create(command: string, id: string): Promise<Command> {
+    const createdCommand = new this.commandModel({
+      userId: id,
+      command,
+    });
+    return createdCommand.save();
+  }
 
-    if (!validCommands.includes(cmd)) {
-      throw new Error('Commande non valide');
-    }
-
-    const newCommand = await this.commandModel.create({ userId, command });
-
-    // Enregistrer l'événement dans les logs
-    await this.auditService.createLog(
-      userId,
-      'COMMAND_EXECUTED',
-      `Commande exécutée : ${command}`,
-    );
-
-    return { message: 'Commande exécutée', command: newCommand };
+  async findAll(): Promise<Command[]> {
+    return this.commandModel.find().populate('userId').exec();
   }
 }
