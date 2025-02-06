@@ -30,6 +30,22 @@ export class ChatController {
     return this.chatService.getRoomMessages(roomId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':classId/private/:user1/:user2')
+  getPrivateChat(
+    @Param('classId') classId: string,
+    @Param('user1') user1: string,
+    @Param('user2') user2: string,
+  ) {
+    return this.chatService.getPrivateMessages(classId, user1, user2);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':classId/class')
+  getClassChat(@Param('classId') classId: string) {
+    return this.chatService.getClassMessages(classId);
+  }
+
   // Supprimer un message spécifique
   @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
   @Delete('message/:messageId')

@@ -28,7 +28,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:5173', // React app URL
+    origin: process.env.FRONTEND_URL, // React app URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Include cookies if needed
   });

@@ -2,79 +2,111 @@
 import {
   WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
-import { SendMessageDto } from './dtos/send-message.dto';
-import { ClearRoomMessagesDto, DeleteMessageDto } from './dtos/moderation.dto';
+// import { UseGuards } from '@nestjs/common';
+// import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { ClassesService } from 'src/classes/classes.service';
+import { AuthService } from 'src/auth/auth.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+  cors: {
+    origin: '*', // Remplacez '*' par l'URL de votre frontend en production
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
+// @UseGuards(JwtAuthGuard)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private classService: ClassesService,
+    private userService: AuthService,
+  ) {}
 
-  handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+  async handleConnection(client: Socket) {
+    const { classId, userId } = client.handshake.query;
+    if (classId) {
+      await client.join(classId as string);
+    }
+    if (userId) {
+      await client.join(`${classId}-${userId}`);
+    }
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    const { classId, userId } = client.handshake.query;
+    if (classId) {
+      client.leave(classId as string);
+    }
+    if (userId) {
+      client.leave(`${classId}-${userId}`);
+    }
   }
 
-  @SubscribeMessage('sendMessage')
-  async handleSendMessage(@MessageBody() sendMessageDto: SendMessageDto) {
-    const message = await this.chatService.sendMessage(sendMessageDto);
-    this.server.to(sendMessageDto.roomId).emit('message', message);
-    return message;
+  @SubscribeMessage('privateMessage')
+  async handlePrivateMessage(
+    client: Socket,
+    payload: { classId: string; receiverId: string; content: string },
+  ) {
+    const senderId = client.handshake.query.userId as string;
+    const newMessage = await this.chatService.createPrivateMessage(
+      payload.classId,
+      senderId,
+      payload.receiverId,
+      payload.content,
+    );
+    this.server
+      .to(`${payload.classId}-${payload.receiverId}`)
+      .to(`${payload.classId}-${senderId}`)
+      .emit('privateMessage', newMessage);
   }
 
-  @SubscribeMessage('joinRoom')
-  handleJoinRoom(client: Socket, roomId: string) {
-    client.join(roomId);
-    console.log(`Client ${client.id} joined room ${roomId}`);
+  @SubscribeMessage('classMessage')
+  async handleClassMessage(
+    client: Socket,
+    payload: { classId: string; content: string },
+  ) {
+    const senderId = client.handshake.query.userId as string;
+    const newMessage = await this.chatService.createClassMessage(
+      payload.classId,
+      senderId,
+      payload.content,
+    );
+    this.server.to(payload.classId).emit('classMessage', newMessage);
   }
 
   @SubscribeMessage('deleteMessage')
-  async handleDeleteMessage(@MessageBody() deleteMessageDto: DeleteMessageDto) {
-    const { messageId } = deleteMessageDto;
-    await this.chatService.deleteMessage(messageId);
-
-    // Émission à tous les clients de la suppression du message
-    this.server.emit('messageDeleted', { messageId });
-  }
-
-  @SubscribeMessage('clearRoomMessages')
-  async handleClearRoomMessages(
-    @MessageBody() clearRoomMessagesDto: ClearRoomMessagesDto,
+  async handleDeleteMessage(
+    client: Socket,
+    payload: { classId: string; messageId: string },
   ) {
-    const { roomId } = clearRoomMessagesDto;
-    await this.chatService.clearRoomMessages(roomId);
-
-    // Notification à la salle de la suppression des messages
-    this.server.to(roomId).emit('roomMessagesCleared', { roomId });
+    const userId = client.handshake.query.userId as string;
+    const user = await this.userService.findById(userId);
+    if (user.role !== 'teacher') {
+      return;
+    }
+    await this.chatService.deleteClassMessage(payload.messageId);
+    this.server.to(payload.classId).emit('deleteMessage', payload.messageId);
   }
 
-  @SubscribeMessage('offer')
-  handleOffer(client: any, payload: any) {
-    // Relayer l'offre aux autres clients
-    client.broadcast.emit('offer', payload);
+  @SubscribeMessage('screenShare')
+  handleScreenShare(
+    client: Socket,
+    payload: { classId: string; stream: MediaStream },
+  ) {
+    client.to(payload.classId).emit('screenShare', payload.stream);
   }
 
-  @SubscribeMessage('answer')
-  handleAnswer(client: any, payload: any) {
-    // Relayer la réponse aux autres clients
-    client.broadcast.emit('answer', payload);
-  }
-
-  @SubscribeMessage('candidate')
-  handleCandidate(client: any, payload: any) {
-    // Relayer les candidats ICE aux autres clients
-    client.broadcast.emit('candidate', payload);
+  @SubscribeMessage('stopScreenShare')
+  handleStopScreenShare(client: Socket, payload: { classId: string }) {
+    client.to(payload.classId).emit('stopScreenShare');
   }
 }

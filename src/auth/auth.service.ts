@@ -115,4 +115,11 @@ export class AuthService {
     if (!user) throw new NotFoundException('Utilisateur non trouvé');
     return { message: 'Compte supprimé avec succès' };
   }
+
+  async findById(userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) throw new NotFoundException('Utilisateur non trouvé');
+    return user;
+  }
 }

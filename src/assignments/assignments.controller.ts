@@ -30,7 +30,13 @@ export class AssignmentsController {
   )
   async createAssignment(
     @Request() req,
-    @Body() body: { classId: string; title: string; description: string },
+    @Body()
+    body: {
+      classId: string;
+      title: string;
+      description: string;
+      dueDate: Date;
+    },
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     const filePaths = files.map((file) => `/storage/${file.filename}`);
@@ -40,6 +46,7 @@ export class AssignmentsController {
       body.title,
       body.description,
       filePaths,
+      body.dueDate,
     );
   }
 

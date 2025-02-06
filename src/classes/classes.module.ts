@@ -18,5 +18,6 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
   ],
   providers: [ClassesService],
   controllers: [ClassesController],
+  exports: [ClassesService],
 })
 export class ClassesModule {}

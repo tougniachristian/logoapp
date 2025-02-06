@@ -116,9 +116,11 @@ export class AssignmentsService {
     teacherId: string,
     title: string,
     description: string,
-    filePaths: string[],
+    filePaths?: string[],
+    dueDate?: Date,
   ): Promise<Assignment> {
-    const classData = await this.classModel.findById(classId);
+    const classData = (await this.classModel.findById(classId)).populated('students');
+    console.log(classData);
     if (!classData) throw new NotFoundException('Classe introuvable');
 
     const assignment = new this.assignmentModel({
@@ -126,6 +128,7 @@ export class AssignmentsService {
       teacherId,
       title,
       description,
+      dueDate,
       submissions: [],
       files: filePaths,
     });
