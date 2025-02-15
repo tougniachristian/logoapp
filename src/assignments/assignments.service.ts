@@ -63,12 +63,31 @@ export class AssignmentsService {
     return { message: 'Devoir soumis avec succès' };
   }
 
+  async getSubmissions(assigmentId: string): Promise<any> {
+    try {
+      const assignment = await this.assignmentModel.findById(assigmentId);
+      if (!assignment) throw new NotFoundException('Devoir introuvable');
+
+      const submissions = this.submissionModel
+        .find({
+          assignment: assigmentId,
+        })
+        .populate('student')
+        .populate('assignment');
+      return submissions;
+    } catch (error) {
+      throw new Error(
+        `Erreur lors de la récupération des soumissions ${error.message}`,
+      );
+    }
+  }
+
   async gradeSubmission(
     assignmentId: string,
     teacherId: string,
     studentId: string,
     grade: number,
-    feedback: string,
+    feedback?: string,
   ) {
     const assignment = await this.assignmentModel
       .findById(assignmentId)

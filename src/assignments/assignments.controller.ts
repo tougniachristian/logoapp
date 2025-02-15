@@ -59,6 +59,12 @@ export class AssignmentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('submission/:id')
+  async getSubmission(@Param('id') classId: string) {
+    return this.assignmentsService.getSubmissions(classId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post(':id/submit')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -86,7 +92,7 @@ export class AssignmentsController {
   async gradeSubmission(
     @Request() req,
     @Param('id') id: string,
-    @Body() body: { studentId: string; grade: number; feedback: string },
+    @Body() body: { studentId: string; grade: number; feedback?: string },
   ) {
     return this.assignmentsService.gradeSubmission(
       id,
