@@ -13,10 +13,13 @@ export class Assignment extends Document {
   description: string;
 
   @Prop()
-  dueDate: Date; // Date limite pour les devoirs
+  dueDate: string; // Date limite pour les devoirs
 
   @Prop({ type: [String], default: [] })
-  files: string[]; // Liste des chemins des fichiers joints
+  files?: string[]; // Liste des chemins des fichiers joints
+
+  @Prop({ required: false })
+  logoScriptToComplete?: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Class' })
   class: Class;

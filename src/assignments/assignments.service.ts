@@ -118,13 +118,10 @@ export class AssignmentsService {
     description: string,
     filePaths?: string[],
     dueDate?: Date,
+    logoScriptToComplete?: string,
   ): Promise<Assignment> {
-    const classData = (await this.classModel.findById(classId)).populated(
-      'students',
-    );
-    console.log(classData);
+    const classData = await this.classModel.findById(classId);
     if (!classData) throw new NotFoundException('Classe introuvable');
-
     const assignment = new this.assignmentModel({
       class: classId,
       teacherId,
@@ -133,8 +130,9 @@ export class AssignmentsService {
       dueDate,
       submissions: [],
       files: filePaths,
+      logoScriptToComplete,
     });
-    await assignment.save();
+    const saved = await assignment.save();
     await this.classModel.findByIdAndUpdate(classId, {
       $addToSet: { assignments: assignment._id },
     });
@@ -149,6 +147,6 @@ export class AssignmentsService {
       ),
     );
 
-    return assignment;
+    return saved;
   }
 }

@@ -36,6 +36,7 @@ export class AssignmentsController {
       title: string;
       description: string;
       dueDate: Date;
+      logoScriptToComplete?: string;
     },
     @UploadedFiles() files: Express.Multer.File[],
   ) {
@@ -47,6 +48,7 @@ export class AssignmentsController {
       body.description,
       filePaths,
       body.dueDate,
+      body.logoScriptToComplete,
     );
   }
 
