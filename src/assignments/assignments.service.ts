@@ -92,14 +92,14 @@ export class AssignmentsService {
     const assignment = await this.assignmentModel
       .findById(assignmentId)
       .populate({ path: 'class', populate: { path: 'teacherId' } })
-      .populate('submissions');
+      .populate({ path: 'submissions', populate: { path: 'student' } });
     if (!assignment) throw new NotFoundException('Devoir introuvable');
 
     if (assignment.class.teacherId._id.toString() !== teacherId)
       throw new UnauthorizedException('Action réservée au professeur');
 
     const submission = assignment.submissions.find(
-      (s) => s.student.toString() === studentId,
+      (s) => s.student._id.toString() === studentId,
     );
     if (!submission) throw new NotFoundException('Soumission non trouvée');
 
@@ -108,7 +108,7 @@ export class AssignmentsService {
     await submission.save();
     await assignment.save();
     await this.notificationsService.notifyGradeAssigned(
-      submission.student.email,
+      submission.student.email ?? '',
       assignment.title,
       grade,
     );
@@ -161,7 +161,7 @@ export class AssignmentsService {
       classData.students.map(
         async (student) =>
           await this.notificationsService.notifyCreateAssignment(
-            student.email,
+            student.email ?? '',
             assignment.title,
           ),
       ),
