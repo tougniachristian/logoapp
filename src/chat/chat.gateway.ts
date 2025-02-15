@@ -51,6 +51,53 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('joinAssignment')
+  handleJoinAssignment(client: Socket, assignmentId: string) {
+    client.join(`assignment-${assignmentId}`);
+  }
+
+  @SubscribeMessage('leaveAssignment')
+  handleLeaveAssignment(client: Socket, assignmentId: string) {
+    client.leave(`assignment-${assignmentId}`);
+  }
+
+  @SubscribeMessage('updateSubmission')
+  handleUpdateSubmission(
+    client: Socket,
+    payload: { assignmentId: string; content: string },
+  ) {
+    this.server
+      .to(`assignment-${payload.assignmentId}`)
+      .emit('submissionUpdated', {
+        studentId: client.id,
+        content: payload.content,
+      });
+  }
+
+  @SubscribeMessage('shareScreen')
+  handleShareScreen(
+    client: Socket,
+    payload: {
+      assignmentId: string;
+      submissionId: string;
+      isAnonymous: boolean;
+    },
+  ) {
+    this.server
+      .to(`assignment-${payload.assignmentId}`)
+      .emit('screenShared', payload);
+  }
+
+  @SubscribeMessage('updateGrade')
+  handleUpdateGrade(
+    client: Socket,
+    payload: { assignmentId: string; submissionId: string; grade: number },
+  ) {
+    this.server
+      .to(`assignment-${payload.assignmentId}`)
+      .emit('gradeUpdated', payload);
+  }
+
   @SubscribeMessage('privateMessage')
   async handlePrivateMessage(
     client: Socket,

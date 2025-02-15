@@ -27,11 +27,12 @@ export class AssignmentsService {
     assignmentId: string,
     studentId: string,
     content: string,
-    file: string,
+    file?: string,
   ) {
     const assignment = await this.assignmentModel
       .findById(assignmentId)
-      .populate('submissions');
+      .populate('submissions')
+      .populate({ path: 'class', populate: { path: 'teacherId' } });
     if (!assignment) throw new NotFoundException('Devoir introuvable');
 
     const existingSubmission = await this.submissionModel.findOne({

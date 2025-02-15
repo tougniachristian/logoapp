@@ -72,7 +72,7 @@ export class AssignmentsController {
     @Body() body: { content: string },
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const filePath = `/storage/${file.filename}`;
+    const filePath = `/storage/${file?.filename}`;
     return this.assignmentsService.submitAssignment(
       id,
       req.user.id,
