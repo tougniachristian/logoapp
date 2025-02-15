@@ -40,8 +40,8 @@ export class ClassesService {
     return classData;
   }
 
-  async joinClass(classId: string, link: string, userId: string) {
-    const classData = await this.classModel.findById(classId);
+  async joinClass(link: string, userId: string) {
+    const classData = await this.classModel.findOne({ link });
     if (!classData) throw new NotFoundException('Classe introuvable');
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Utilisateur introuvable');

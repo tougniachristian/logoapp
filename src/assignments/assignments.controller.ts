@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+// import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { MulterConfigService } from 'src/common/multer/multer-config.service';
 
@@ -20,7 +20,7 @@ import { MulterConfigService } from 'src/common/multer/multer-config.service';
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['teacher', 'admin']))
+  @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(
     FilesInterceptor('files', 5, {
@@ -56,7 +56,7 @@ export class AssignmentsController {
     return this.assignmentsService.getAssignmentsForClass(classId);
   }
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['user']))
+  @UseGuards(JwtAuthGuard)
   @Post(':id/submit')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -79,7 +79,7 @@ export class AssignmentsController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['teacher', 'admin']))
+  @UseGuards(JwtAuthGuard)
   @Post(':id/grade')
   async gradeSubmission(
     @Request() req,

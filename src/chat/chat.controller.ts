@@ -11,13 +11,13 @@ import {
 import { ChatService } from './chat.service';
 import { CreateRoomDto } from './dtos/create-room.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+// import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @UseGuards(JwtAuthGuard)
   @Post('room')
   createRoom(@Body() createRoomDto: CreateRoomDto, @Req() req) {
     return this.chatService.createRoom(createRoomDto, req.user.id);
@@ -47,7 +47,7 @@ export class ChatController {
   }
 
   // Supprimer un message spécifique
-  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @UseGuards(JwtAuthGuard)
   @Delete('message/:messageId')
   async deleteMessage(@Param('messageId') messageId: string) {
     await this.chatService.deleteMessage(messageId);
@@ -71,7 +71,7 @@ export class ChatController {
 
   // Supprimer tous les messages d'une salle
 
-  @UseGuards(JwtAuthGuard, new RolesGuard(['admin', 'teacher']))
+  @UseGuards(JwtAuthGuard)
   @Delete('room/:roomId/messages')
   async clearRoomMessages(@Param('roomId') roomId: string) {
     await this.chatService.clearRoomMessages(roomId);

@@ -95,6 +95,12 @@ export class ScriptsService {
     return script;
   }
 
+  async findByTitle(name: string): Promise<Script> {
+    const script = await this.scriptModel.findOne({ title: name });
+    if (!script) throw new NotFoundException('Script not found');
+    return script;
+  }
+
   async generateSharedLink(
     scriptId: string,
     ownerId: string,
@@ -134,6 +140,7 @@ export class ScriptsService {
     if (!originalScript.isPublic && originalScript.userId !== userId) {
       throw new NotFoundException(`Script not found or not accessible`);
     }
+    console.log(originalScript);
 
     const importedScript = new this.scriptModel({
       ...originalScript.toObject(),

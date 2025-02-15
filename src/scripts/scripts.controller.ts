@@ -59,6 +59,11 @@ export class ScriptsController {
     return this.scriptsService.getUserScripts(req.user.id);
   }
 
+  @Get('searchByName/:name')
+  async getScriptByTitle(@Param('name') name: string) {
+    return this.scriptsService.findByTitle(name);
+  }
+
   @Put(':id')
   async updateScript(
     @Request() req,
@@ -90,7 +95,7 @@ export class ScriptsController {
     return { message: 'Shared link revoked' };
   }
 
-  @Patch('import/:id')
+  @Put('import/:id')
   async importScript(@Param('id') id: string, @Request() req) {
     return this.scriptsService.importScript(id, req.user.id);
   }
