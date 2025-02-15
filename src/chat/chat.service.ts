@@ -112,6 +112,7 @@ export class ChatService {
       .find({ classId })
       .sort({ createdAt: 1 })
       .populate('senderId', 'name')
+      .populate({ path: 'classId', populate: { path: 'teacherId' } })
       .exec();
   }
 

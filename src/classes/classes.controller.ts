@@ -63,10 +63,7 @@ export class ClassesController {
 
   @UseGuards(JwtAuthGuard)
   @Post('join')
-  async joinClass(
-    @Request() req,
-    @Body() body: { link: string },
-  ) {
+  async joinClass(@Request() req, @Body() body: { link: string }) {
     return this.classesService.joinClass(body.link, req.user.id);
   }
 

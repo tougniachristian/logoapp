@@ -90,7 +90,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const userId = client.handshake.query.userId as string;
     const user = await this.userService.findById(userId);
-    if (user.role !== 'teacher') {
+    const classes = await this.classService.getClassById(
+      payload.classId,
+      userId,
+    );
+    if (user?.id !== classes?.teacherId?.id) {
       return;
     }
     await this.chatService.deleteClassMessage(payload.messageId);
