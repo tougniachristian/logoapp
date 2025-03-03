@@ -22,4 +22,9 @@ export class CommandsService {
   async findAll(): Promise<Command[]> {
     return this.commandModel.find().populate('userId').exec();
   }
+
+  async clearAll(): Promise<{ deletedCount: number }> {
+    const result = await this.commandModel.deleteMany({});
+    return { deletedCount: result.deletedCount };
+  }
 }

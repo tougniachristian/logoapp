@@ -5,6 +5,7 @@ import {
   UseGuards,
   Get,
   Request,
+  Delete,
 } from '@nestjs/common';
 // import { CommandsService } from './commands.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -27,5 +28,10 @@ export class CommandsController {
   @Get()
   async findAll(): Promise<Command[]> {
     return this.logoService.findAll();
+  }
+
+  @Delete()
+  async clear() {
+    return this.logoService.clearAll();
   }
 }
